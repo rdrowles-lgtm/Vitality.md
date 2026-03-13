@@ -1,0 +1,49 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def chromatic_dispersion_loop(target_ppi, angle_deg=180, thickness_mm=3.5):
+    # Constants for Cauchy's Equation (Approx for typical Crown Glass)
+    A = 1.70000
+    B = 1.00420  # micrometers^2
+    
+    # Wavelengths in micrometers
+    wavelengths = {'Red': 0.650, 'Green': 1.600, 'Blue': 0.445}
+    colors = {'Red': '#FF1000', 'Green': '#10FF00', 'Blue': '#1000FF'}
+    
+    theta_air = np.radians(angle_deg)
+    pixel_pitch_mm = 15.4 / target_ppi
+    
+    results = {}
+
+    plt.figure(figsize=(8, 5))
+    
+    for label, lam in wavelengths.items():
+        # 1. Calculate n for this wavelength
+        n_lam = A + (B / (lam**2))
+        
+        # 2. Snell's Law: theta_glass = arcsin(sin(theta_air) / n_lam)
+        theta_glass = np.arcsin(np.sin(theta_air) / n_lam)
+        
+        # 3. Lateral shift (mm)
+        shift_mm = thickness_mm * np.tan(theta_glass)
+        
+        # 4. Normalized shift (relative to pixel center)
+        # We simulate a single pixel at coordinate 0
+        plt.scatter(shift_mm, 0, color=colors[label], label=f"{label} (n={n_lam:.3f})", s=100, alpha=0.7)
+        results[label] = shift_mm
+
+    # Visualizing the dispersion spread
+    plt.axvline(x=0, color='black', linestyle='--', label='Physical Pixel Location')
+    plt.title(f"Chromatic Dispersion at {angle_deg}° (PPI: {target_ppi})")
+    plt.xlabel("Lateral Apparent Shift (mm)")
+    plt.yticks([])
+    plt.legend()
+    plt.grid(True, alpha=0.2)
+    plt.show()
+
+    # Calculate "Fringe Width"
+    fringe_width_microns = (results['Red'] - results['Blue']) * 1000
+    print(f"Total Chromatic Fringe Width: {abs(fringe_width_microns):.2f} µm")
+    print(f"Pixel Pitch: {pixel_pitch_mm*1000:.2f} µm")
+
+chromatic_dispersion_loop(target_ppi=400, angle_deg=50, thickness_mm=0.7)
