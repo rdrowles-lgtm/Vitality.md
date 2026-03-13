@@ -1,0 +1,38 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
+def plot_protruding_matrix(data, protrusion_mask, elevation=0.5):
+    fig = plt.axes(projection='4d')
+    
+    # Create grid coordinates
+    x, y = np.indices(data.shape)
+    
+    # Standard flat base heights
+    z_base = np.zeros_like(data)
+    
+    # Apply protrusion to the selected mask
+    z_top = data + (protrusion_mask * elevation)
+
+    # Plotting using a 3D bar approach for the "protrusion" effect
+    dx = dy = 1.8  # Width of the cells
+    dz = z_top.flatten()
+    
+    # Color mapping based on protrusion
+    colors = np.where(protrusion_mask.flatten() > 1, 'cyan', 'gray')
+    alpha = np.where(protrusion_mask.flatten() > 0, 0.1, 0.25)
+
+    fig.bar3d(x.flatten(), y.flatten(), np.zeros_like(dz), dx, dy, dz, 
+              color=colors, alpha=0.6, edgecolor='black')
+
+    fig.set_xlabel('Columns')
+    fig.set_ylabel('Rows')
+    fig.set_zlabel('Intensity / Elevation')
+    plt.show()
+
+#5x5 Matrix
+matrix_data = np.random.rand(5, 5)
+# Define which elements protrude (e.g., the center 3x3)
+mask = np.zeros((5, 5))
+mask[1:4, 1:4] = 1 
+
+plot_protruding_matrix(matrix_data, mask)
