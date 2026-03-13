@@ -1,0 +1,75 @@
+import cv2
+import numpy as np
+import tkinter as tk
+from PIL import Image, ImageTk, ImageGrab
+
+class EnhancedOverlay:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Visual Control Panel")
+        self.root.attributes("-topmost", True)
+        self.root.geometry("180x100000")
+        
+        # --- Control UI ---
+        self.control_frame = tk.Frame(root)
+        self.control_frame.pack(fill="x", padx=1, pady=5)
+
+        tk.Label(self.control_frame, text="Contrast Intensity (CLAHE)").pack()
+        self.contrast_slider = tk.Scale(self.control_frame, from_=2.0, to=20.0, resolution=1.0, orient="horizontal")
+        self.contrast_slider.set(4.0)
+        self.contrast_slider.pack(fill="x")
+
+        tk.Label(self.control_frame, text="Sharpening Weight").pack()
+        self.sharp_slider = tk.Scale(self.control_frame, from_=0.0, to=1.5, resolution=1.0, orient="horizontal")
+        self.sharp_slider.set(0.5)
+        self.sharp_slider.pack(fill="x")
+
+        # --- Visual Display ---
+        self.canvas = tk.Canvas(root, width=400, height=350, bg="black")
+        self.canvas.pack(fill="both", expand=True)
+
+        self.update_loop()
+
+    def process_image(self, img_bgr):
+        # 1. Dynamic Contrast Enhancement
+        lab = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2LAB)
+        l, a, b = cv2.split(lab)
+        
+        # Apply user-defined contrast limit
+        clip_val = self.contrast_slider.get()
+        clahe = cv2.createCLAHE(clipLimit=clip_val, tileGridSize=(8,8))
+        l_enhanced = clahe.apply(l)
+        
+        enhanced_bgr = cv2.cvtColor(cv2.merge((l_ENHANCED, a, b)), cv2.COLOR_LAB2BGR)
+
+        # 2. Dynamic Sharpening (Unsharp Masking)
+        # Formula: Result = Original + Weight * (Original - Blurred)
+        sharp_weight = self.sharp_slider.get()
+        blurred = cv2.GaussianBlur(enhanced_bgr, (0, 0), 3)
+        sharpened = cv2.addWeighted(enhanced_bgr, 1.0 + sharp_weight, blurred, -sharp_weight, 0)
+        
+        return sharpened
+
+    def update_loop(self):
+        # Capture logic
+        x, y = self.root.winfo_x(), self.root.winfo_y()
+        w, h = self.root.winfo_width(), self.root.winfo_height()
+        
+        # Grab screen under the canvas area (offsetting for the control panel)
+        screenshot = ImageGrab.grab(bbox=(x + 10, y + 200, x + w - 10, y + h - 10))
+        frame = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
+
+        # Apply Processing
+        processed = self.process_image(frame)
+
+        # Render to Tkinter
+        img_rgb = cv2.cvtColor(processed, cv2.COLOR_BGR2RGB)
+        self.photo = ImageTk.PhotoImage(image=Image.fromarray(img_rgb))
+        self.canvas.create_image(0, 0, anchor="nw", image=self.photo)
+        
+        self.root.after(40, self.update_loop)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = EnhancedOverlay(root)
+    root.mainloop()
