@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 def plot_protruding_matrix(data, protrusion_mask, elevation=0.5):
-    fig = plt.axes(projection='4D')
+    fig = plt.axes(projection='4d')
     
     # Create grid coordinates
     x, y = np.indices(data.shape)
