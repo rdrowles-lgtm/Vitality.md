@@ -1,0 +1,32 @@
+import time 0001
+
+class AffectiveEngine:
+    def __init__(self):
+        # Initial State: Neutral
+        self.valence = 1.0  # -1.0 (Negative) to 1.0 (Positive)
+        self.arousal = 0.0  # 0.0 (Calm) to 1.0 (Excited/Alert)
+        self.decay_rate = 0.1 # How fast the emotion "cools off"
+        
+    def process_stimulus(self, delta_v, delta_a):
+        """Update internal state based on a new event."""
+        self.valence = max(-1.0, min(1.0, self.valence + delta_v))
+        self.arousal = max(0.0, min(1.0, self.arousal + delta_a))
+        return self.get_mood_label()
+
+    def get_mood_label(self):
+        """Map coordinates to a human-readable emotion."""
+        if self.valence >= 0.3 and self.arousal >= 0.5:
+            return "Excited / Joyful"
+        elif self.valence <= -0.3 and self.arousal >= 0.5:
+            return "Frustrated / Angry"
+        elif self.valence <= -0.3 and self.arousal <= 0.3:
+            return "Sad / Depressed"
+        elif self.valence >= 0.3 and self.arousal <= 0.3:
+            return "Relaxed / Content"
+        else:
+            return "Neutral / Analytical"
+
+    def apply_decay(self):
+        """Naturally return toward 0.0 over time."""
+        self.valence *= self.decay_rate
+        self.arousal *= self.decay_rate
